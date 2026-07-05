@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Trazabilidad de Cultivo · Lab Nico</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#16171b; --card:#212228; --soft:#2b2d35;
+  --line:#33353e; --line2:#474a55;
+  --ink:#e9e8e4; --muted:#9b988f;
+  --placa:#54b483;  --placa-bg:#18291f;
+  --grano:#d6a63c;  --grano-bg:#2c2616;
+  --bulk:#5aa2d6;   --bulk-bg:#16242f;
+  --fru:#e07b41;    --fru-bg:#2e2016;
+  --cos:#41b3b3;    --cos-bg:#123030;
+  --ok:#54b483; --warn:#d6a63c; --bad:#e66a62;
+  --jf:#8bb0e0; --sif:#c191e6;
+  --mono:"SF Mono","JetBrains Mono",Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+
+/* ---------- App shell ---------- */
+.app{display:flex;min-height:100vh;align-items:stretch}
+.sidebar{width:230px;flex-shrink:0;background:var(--card);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800}
+.brand .ic{font-size:21px}
+.side-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin:4px 0 14px;line-height:1.5}
+.side-cepas{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.chip{font-size:11px;font-weight:600;padding:4px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:6px}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.chip.jf{background:#1c2734;color:var(--jf)} .chip.jf .dot{background:var(--jf)}
+.chip.sif{background:#281c34;color:var(--sif)} .chip.sif .dot{background:var(--sif)}
+.nav-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin:8px 6px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:none;background:transparent;border-radius:9px;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;text-align:left;transition:background .12s}
+.nav-item:hover{background:var(--soft)}
+.nav-item.on{background:var(--soft);font-weight:700;box-shadow:inset 3px 0 0 var(--s)}
+.nav-item .ni{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-item .nt{flex:1}
+.nav-item .nb{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--bg);border-radius:20px;padding:1px 8px;min-width:24px;text-align:center}
+.nav-item.on .nb{background:var(--card);color:var(--s)}
+.side-foot{margin-top:auto;padding-top:12px;font-size:10px;color:var(--muted);line-height:1.5}
+
+.main{flex:1;min-width:0;padding:24px 30px 70px;max-width:920px}
+.view{display:none}
+.view.active{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.view-h{font-size:18px;font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:9px}
+.view-h .vbar{width:5px;height:21px;border-radius:3px;background:var(--s)}
+.view-desc{font-size:12px;color:var(--muted);margin-bottom:18px}
+
+/* ---------- Pipeline (resumen) ---------- */
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px}
+.stage{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--s);border-radius:10px;padding:12px 9px;text-align:center;width:100%;font-family:inherit;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.stage:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.5);border-color:var(--line2)}
+.stage:active{transform:translateY(0)}
+.stage .icn{font-size:16px}
+.stage .n{font-size:26px;font-weight:800;line-height:1;color:var(--s);margin:3px 0 1px;font-variant-numeric:tabular-nums}
+.stage .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.stage .det{font-size:10px;color:var(--muted);margin-top:3px;min-height:13px}
+.pipe-note{font-size:11px;color:var(--muted);text-align:center;margin-bottom:24px}
+
+/* ---------- Efectividad ---------- */
+.blk-h{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:6px 0 10px}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.mcard .ml{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.mcard .mv{font-size:22px;font-weight:800;margin-top:2px}
+.mcard .ms{font-size:10px;color:var(--muted)}
+
+/* ---------- Rows ---------- */
+.row{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--s);border-radius:8px;padding:9px 11px;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row .id{font-family:var(--mono);font-size:12px;font-weight:600}
+.row .meta{font-size:11px;color:var(--muted)}
+.row .spacer{flex:1}
+.tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.jf{background:#1c2734;color:var(--jf)} .tag.sif{background:#281c34;color:var(--sif)}
+.tag.ok{background:var(--placa-bg);color:var(--ok)}
+.tag.warn{background:#332b16;color:var(--warn)}
+.tag.bad{background:#37201e;color:var(--bad)}
+.tag.g{background:var(--soft);color:var(--muted)}
+.age{font-family:var(--mono);font-size:11px;font-weight:600}
+.age.ok{color:var(--ok)} .age.warn{color:var(--warn)} .age.bad{color:var(--bad)}
+.empty{font-size:12px;color:var(--muted);font-style:italic;padding:6px 2px}
+.alert{width:100%;font-size:10px;color:var(--bad);font-weight:600;margin-top:2px}
+.cepa-sub{font-size:11px;font-weight:700;color:var(--muted);margin:14px 0 6px;padding-left:2px}
+.cepa-sub:first-child{margin-top:0}
+
+/* ---------- Cosecha ---------- */
+.cos-tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.cos-tot .ct{background:var(--cos-bg);border:1px solid #2b5656;border-radius:10px;padding:10px 12px;text-align:center}
+.cos-tot .ct .l{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--cos);font-weight:700}
+.cos-tot .ct .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.cos-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--cos);border-radius:8px;padding:11px 12px;margin-bottom:6px}
+.cos-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.cos-head .id{font-family:var(--mono);font-size:12px;font-weight:600}
+.cos-head .meta{font-size:11px;color:var(--muted)}
+.cos-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.cos-stats .cs{border-radius:8px;padding:9px;text-align:center;border:1px solid var(--line)}
+.cos-stats .cs .cl{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;color:var(--muted);margin-bottom:2px}
+.cos-stats .cs .cv{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.cos-stats .fresco{background:#16271d} .cos-stats .fresco .cl{color:var(--placa)}
+.cos-stats .seco{background:#2a2415} .cos-stats .seco .cl{color:var(--grano)}
+.cos-stats .rend{background:var(--cos-bg)} .cos-stats .rend .cl{color:var(--cos)}
+.cos-nota{font-size:11px;color:var(--muted);margin-top:9px}
+
+/* ---------- Timeline ---------- */
+.tl{border-left:2px solid var(--line);margin-left:6px;padding-left:15px}
+.tl-item{position:relative;padding:2px 0 13px}
+.tl-item::before{content:"";position:absolute;left:-20px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--line2);border:2px solid var(--bg)}
+.tl-item .d{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.tl-item .t{font-size:12px;margin-top:1px}
+.link-more{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;color:var(--bulk);background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
+.link-more:hover{text-decoration:underline}
+
+/* ---------- Microdosis / pacientes ---------- */
+.proto{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--sif);border-radius:10px;padding:15px 17px;margin-bottom:20px}
+.proto h3{font-size:14px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.proto .rules{font-size:13px;line-height:1.8}
+.proto .rules b{color:var(--sif)}
+.proto .pill-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--muted)}
+.proto .lg{display:inline-flex;align-items:center;gap:5px}
+.proto .lg i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.pac{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px 17px;margin-bottom:12px}
+.pac-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:8px;cursor:pointer;font-family:inherit;color:var(--ink);transition:transform .12s,box-shadow .12s,border-color .12s}
+.pac-row:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.22);border-color:var(--sif)}
+.pac-row .nm{font-size:14px;font-weight:800}
+.pac-row .pid{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.pac-row .meta{font-size:11px;color:var(--muted)}
+.pac-row .spacer{flex:1}
+.pac-row .mini-prog{width:84px;height:6px;background:var(--soft);border-radius:20px;overflow:hidden;flex-shrink:0;display:inline-block}
+.pac-row .mp-bar{display:block;height:100%;background:var(--sif);border-radius:20px}
+.pac-row .rc{font-family:var(--mono);font-size:12px;color:var(--sif);font-weight:700;white-space:nowrap}
+.pac-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:11px}
+.pac-h .nm{font-size:15px;font-weight:800}
+.pac-h .pid{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.pac-h .meta{font-size:11px;color:var(--muted);margin-left:auto}
+.prog{height:8px;background:var(--soft);border-radius:20px;overflow:hidden;margin-bottom:5px}
+.prog-bar{height:100%;background:var(--sif);border-radius:20px;transition:width .3s}
+.prog-txt{font-size:11px;color:var(--muted);margin-bottom:13px}
+.wkrow{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.wkrow .wl{font-size:10px;font-weight:700;color:var(--muted);width:26px;flex-shrink:0}
+.toma{font-size:10px;font-family:var(--mono);padding:4px 7px;border-radius:6px;border:1px solid var(--line);background:var(--bg);white-space:nowrap;display:inline-flex;gap:4px;align-items:center}
+.toma .tn{opacity:.55}
+.toma.done{background:#18291f;border-color:#2b5f43;color:var(--placa)}
+.toma.next{background:#2a1e38;border-color:var(--sif);color:var(--sif);font-weight:700;box-shadow:0 0 0 1px var(--sif)}
+.toma.pend{opacity:.7}
+.pac-notas{margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
+.pac-notas .nt-h{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-bottom:7px}
+.notas-toggle{background:none;border:none;color:var(--sif);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.04em}
+.notas-toggle:hover{filter:brightness(1.15)}
+.notas-toggle .cnt{color:var(--muted);font-weight:600;letter-spacing:0}
+.notas-toggle .arw{font-size:10px;transition:transform .15s}
+.notas-body{margin-top:11px}
+.pac-note{font-size:12px;margin-bottom:7px;display:flex;gap:9px;align-items:baseline}
+.pac-note .nd{font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0;min-width:42px}
+.pac-note .nx{flex:1;white-space:pre-wrap;word-break:break-word}
+.pac-note .del{color:var(--bad);cursor:pointer;opacity:0;font-size:11px;flex-shrink:0}
+.pac-note:hover .del{opacity:.7}
+.pac-note .del:hover{opacity:1}
+/* controles editables */
+.toma{cursor:pointer;transition:transform .1s,border-color .1s}
+.toma:hover{transform:translateY(-1px);border-color:var(--sif)}
+.btn{background:var(--sif);color:#fff;border:none;border-radius:7px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.btn:hover{filter:brightness(1.12)}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.ghost:hover{color:var(--ink);filter:none}
+.btn.sm{padding:4px 9px;font-size:11px}
+.pac-new{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;background:var(--card);border:1px dashed var(--line2);border-radius:10px;padding:12px 14px}
+.pac-new input{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 10px;color:var(--ink);font-family:inherit;font-size:13px}
+.pac-new input.nm{flex:1;min-width:150px}
+.pac-tools{display:flex;gap:6px;margin-left:auto}
+.nota-add{display:flex;gap:7px;margin-top:9px;align-items:flex-end}
+.nota-add textarea{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;color:var(--ink);font-family:inherit;font-size:12px;line-height:1.55;resize:vertical;min-height:96px}
+.export-row{margin:0 0 14px}
+.hint{font-size:11px;color:var(--muted);margin:0 0 14px}
+
+/* ---------- Responsive ---------- */
+@media(max-width:760px){
+  .app{flex-direction:column}
+  .sidebar{width:auto;height:auto;position:sticky;top:0;z-index:10;flex-direction:row;flex-wrap:wrap;align-items:center;border-right:none;border-bottom:1px solid var(--line);gap:5px;padding:12px 12px}
+  .brand{width:100%;margin-bottom:2px}
+  .side-sub,.side-cepas,.nav-lbl,.side-foot{display:none}
+  .nav-item{width:auto;padding:7px 11px;font-size:12px;gap:6px}
+  .nav-item.on{box-shadow:inset 0 -3px 0 var(--s)}
+  .nav-item .nb{display:none}
+  .main{padding:18px 16px 60px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <aside class="sidebar">
+    <div class="brand"><span class="ic">🍄</span><span>Trazabilidad</span></div>
+    <div class="side-sub" id="sub">Lab Nico · Psilocybe cubensis</div>
+
+    <div class="side-cepas">
+      <span class="chip jf"><span class="dot"></span>JF · Jack Frost</span>
+      <span class="chip sif"><span class="dot"></span>SIF · Super Ice Flower</span>
+    </div>
+
+    <div class="nav-lbl">Panel</div>
+    <button class="nav-item on" data-v="resumen" style="--s:var(--ink)" onclick="show('resumen')"><span class="ni">📊</span><span class="nt">Resumen</span></button>
+
+    <div class="nav-lbl">Etapas del cultivo</div>
+    <button class="nav-item" data-v="placas" style="--s:var(--placa)" onclick="show('placas')"><span class="ni">🧫</span><span class="nt">Placas Petri</span><span class="nb" id="nb-placas"></span></button>
+    <button class="nav-item" data-v="grano" style="--s:var(--grano)" onclick="show('grano')"><span class="ni">🌾</span><span class="nt">Grano</span><span class="nb" id="nb-grano"></span></button>
+    <button class="nav-item" data-v="bulk" style="--s:var(--bulk)" onclick="show('bulk')"><span class="ni">📦</span><span class="nt">Sustrato</span><span class="nb" id="nb-bulk"></span></button>
+    <button class="nav-item" data-v="fru" style="--s:var(--fru)" onclick="show('fru')"><span class="ni">🍄</span><span class="nt">Fructificación</span><span class="nb" id="nb-fru"></span></button>
+    <button class="nav-item" data-v="cos" style="--s:var(--cos)" onclick="show('cos')"><span class="ni">⚖️</span><span class="nt">Cosecha</span><span class="nb" id="nb-cos"></span></button>
+
+    <div class="nav-lbl">Registro</div>
+    <button class="nav-item" data-v="bita" style="--s:var(--muted)" onclick="show('bita')"><span class="ni">📓</span><span class="nt">Bitácora</span><span class="nb" id="nb-bita"></span></button>
+
+    <div class="nav-lbl">Pacientes</div>
+    <button class="nav-item" data-v="pac" style="--s:var(--sif)" onclick="show('pac')"><span class="ni">💊</span><span class="nt">Microdosis</span><span class="nb" id="nb-pac"></span></button>
+
+    <div class="side-foot" id="foot"></div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <main class="main">
+
+    <!-- Resumen -->
+    <section class="view active" id="view-resumen">
+      <div class="view-h" style="--s:var(--ink)"><span class="vbar"></span>Resumen del cultivo</div>
+      <div class="view-desc">Recorrido de cada lote: placa → grano → sustrato → fruto → cosecha. Tocá una etapa para ver el detalle.</div>
+      <div class="pipe" id="pipe"></div>
+      <div class="pipe-note">Los números son las unidades vivas en cada etapa.</div>
+      <div class="blk-h">Efectividad</div>
+      <div class="mini" id="datos"></div>
+      <div class="blk-h">Actividad reciente</div>
+      <div class="tl" id="tl-mini"></div>
+      <button class="link-more" onclick="show('bita')">Ver bitácora completa →</button>
+    </section>
+
+    <!-- Placas -->
+    <section class="view" id="view-placas">
+      <div class="view-h" style="--s:var(--placa)"><span class="vbar"></span>Placas Petri</div>
+      <div class="view-desc" id="c-placas"></div>
+      <div id="placas"></div>
+    </section>
+
+    <!-- Grano -->
+    <section class="view" id="view-grano">
+      <div class="view-h" style="--s:var(--grano)"><span class="vbar"></span>Colonización de grano</div>
+      <div class="view-desc" id="c-grano"></div>
+      <div id="grano"></div>
+    </section>
+
+    <!-- Sustrato -->
+    <section class="view" id="view-bulk">
+      <div class="view-h" style="--s:var(--bulk)"><span class="vbar"></span>Incubación en sustrato (bulk)</div>
+      <div class="view-desc" id="c-bulk"></div>
+      <div id="bulk"></div>
+    </section>
+
+    <!-- Fructificación -->
+    <section class="view" id="view-fru">
+      <div class="view-h" style="--s:var(--fru)"><span class="vbar"></span>Fructificación</div>
+      <div class="view-desc" id="c-fru"></div>
+      <div id="fru"></div>
+    </section>
+
+    <!-- Cosecha -->
+    <section class="view" id="view-cos">
+      <div class="view-h" style="--s:var(--cos)"><span class="vbar"></span>Cosecha</div>
+      <div class="view-desc" id="c-cos"></div>
+      <div id="cos"></div>
+    </section>
+
+    <!-- Bitácora -->
+    <section class="view" id="view-bita">
+      <div class="view-h" style="--s:var(--muted)"><span class="vbar"></span>Bitácora</div>
+      <div class="view-desc">Registro cronológico de hitos del cultivo.</div>
+      <div class="tl" id="tl"></div>
+    </section>
+
+    <!-- Microdosis / pacientes -->
+    <section class="view" id="view-pac">
+      <div class="view-h" style="--s:var(--sif)"><span class="vbar"></span>Microdosis · seguimiento de pacientes</div>
+      <div class="view-desc">Protocolo Fadiman personalizado. Módulo separado del cultivo, orientado a bienestar y calidad de vida.</div>
+      <div id="proto"></div>
+      <div class="blk-h">Pacientes en seguimiento</div>
+      <div id="pacientes"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   DATOS · editá SOLO este bloque para cargar novedades del lab.
+   Fechas en formato "AAAA-MM-DD". Una línea por unidad/lote.
+   ══════════════════════════════════════════════════════════════ */
+const ACTUALIZADO = "2026-07-04";
+
+// Lotes de placas. estado se calcula por antigüedad. total=null si no se sabe.
+// activo:false = archivado (se guarda pero no cuenta ni se muestra en la lista)
+const PLACAS = [
+  { id:"LP-JF-070626",  cepa:"JF",  fecha:"2026-06-07", total:null, contam:3, activo:false, nota:"pre-trazabilidad · archivado 04/07" },
+  { id:"LP-SIF-070626", cepa:"SIF", fecha:"2026-06-07", total:null, contam:1, activo:false, nota:"pre-trazabilidad · archivado 04/07" },
+  { id:"LP-JF-190626",  cepa:"JF",  fecha:"2026-06-19", total:12,   contam:0, activo:false, nota:"archivado 04/07" },
+  { id:"LP-SIF-200626", cepa:"SIF", fecha:"2026-06-20", total:13,   contam:4, activo:false, nota:"archivado 04/07" },
+  { id:"LP-SIF-190626", cepa:"SIF", fecha:"2026-06-19", total:18,   contam:3, nota:"15 sanas al 04/07" },
+  { id:"LP-JF-200626",  cepa:"JF",  fecha:"2026-06-20", total:17,   contam:3, nota:"p2 · 14 sanas al 04/07 · 3 bajas trich" },
+];
+
+// Frascos/bolsas de grano (spawn). estado: "colonizando" | "listo" | "baja"
+const GRANO = [
+  { id:"JF-GRN-001",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 25/06" },
+  { id:"JF-GRN-002",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 02/07" },
+  { id:"JF-GRN-003",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 02/07" },
+  { id:"JF-GRN-004",  cepa:"JF",  fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"JF-GRN-005",  cepa:"JF",  fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"JF-GRN-006",  cepa:"JF",  fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"JF-GRN-007",  cepa:"JF",  fecha:"2026-06-28", estado:"colonizando", nota:"bolsa ~1.4 kg centeno" },
+  { id:"SIF-GRN-001", cepa:"SIF", fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 25/06" },
+  { id:"SIF-GRN-002", cepa:"SIF", fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 25/06" },
+  { id:"SIF-GRN-003", cepa:"SIF", fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 25/06" },
+  { id:"SIF-GRN-004", cepa:"SIF", fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 27/06" },
+  { id:"SIF-GRN-005", cepa:"SIF", fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 02/07" },
+  { id:"SIF-GRN-006", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"SIF-GRN-007", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"SIF-GRN-008", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"SIF-GRN-009", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"SIF-GRN-010", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"SIF-GRN-011", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"SIF-GRN-012", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"SIF-GRN-013", cepa:"SIF", fecha:"2026-06-28", estado:"colonizando", nota:"bolsa ~1.4 kg centeno" },
+];
+
+// Unidades en incubación de sustrato (fibra de coco). tipo: "bolsa" | "monotube"
+const BULK = [
+  { id:"JF-BLS-001",  cepa:"JF",  tipo:"bolsa", fecha:"2026-06-19", nota:"colonizando bien al 25/06" },
+  { id:"JF-BLS-002",  cepa:"JF",  tipo:"bolsa", fecha:"2026-06-19", nota:"colonizando bien al 25/06" },
+  { id:"SIF-BLS-001", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg · recién armada" },
+  { id:"SIF-BLS-002", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg · recién armada" },
+];
+
+// Unidades en fructificación. fecha = pase a fructificación.
+const FRUCTI = [
+  { id:"JF-MNT-000", cepa:"JF", tipo:"monotube", fecha:"2026-06-13", nota:"muchos frutos y pines" },
+  { id:"JF-BLS-000", cepa:"JF", tipo:"bolsa",    fecha:"2026-06-24", nota:"primeros pines el 01/07 (día 8)" },
+];
+
+// Cosechas (flushes).
+const COSECHAS = [
+  { id:"JF-MNT-000", cepa:"JF", flush:1, fecha:"2026-06-28", fresco:257.5, seco:22, nota:"primer flush · monotube" },
+];
+
+// Bitácora: hitos en orden (los más nuevos arriba se ordenan solos).
+const BITACORA = [
+  { fecha:"2026-07-04", t:"Recuento de placas: vivos 2 lotes (14 JF p2 + 15 SIF = 29). Archivados LP-JF-070626, LP-SIF-070626, LP-JF-190626 y LP-SIF-200626." },
+  { fecha:"2026-07-04", t:"Armadas 2 bolsas de bulk con coco esterilizado (1 kg c/u), ambas SIF (SIF-BLS-001/002). Quedan incubando." },
+  { fecha:"2026-07-02", t:"Bajas por trichoderma: 2 frascos JF (GRN-002/003) + 1 SIF (GRN-005) + 1 placa JF p2 (LP-JF-200626)." },
+  { fecha:"2026-07-01", t:"JF-BLS-000 muestra primeros pines (día 8 desde el pase a fructificación del 24/06)." },
+  { fecha:"2026-06-28", t:"Cosecha JF-MNT-000 flush 1: 257,5 g fresco / 22 g seco (8,5%). Nuevas bolsas de grano JF-007 y SIF-013." },
+  { fecha:"2026-06-28", t:"JF-BLS-000 pineando (día 4 de fructificación)." },
+  { fecha:"2026-06-27", t:"Baja JF-MNT-001 por trichoderma (exceso de humedad en coco). Baja SIF-GRN-004." },
+  { fecha:"2026-06-25", t:"Evento trichoderma: bajas en 4 frascos de grano y 8 placas. JF-MNT-001 pasa a fructificación." },
+  { fecha:"2026-06-21", t:"Inoculados 18 frascos de grano (6 JF + 12 SIF)." },
+  { fecha:"2026-06-20", t:"Nuevo lote de placas: 14 JF + 13 SIF." },
+  { fecha:"2026-06-19", t:"Nuevo lote de placas: 12 JF + 18 SIF. A incubar: JF-BLS-001/002." },
+  { fecha:"2026-06-17", t:"JF-BLS-000 pasa a fructificación." },
+  { fecha:"2026-06-13", t:"JF-MNT-000 pasa a fructificación." },
+];
+// ── MICRODOSIS · pacientes ─────────────────────────────────────
+// Protocolo Fadiman personalizado: 20 tomas en 8 semanas.
+//   inicio  = fecha de la 1ª toma (idealmente un LUNES).
+//   hechas  = nº de tomas ya realizadas (0 a 20).
+//   activo  = false cuando el paciente terminó/pausó.
+//   notas   = observaciones clínicas { fecha, t }.
+const PACIENTES = [
+  { id:"PX-001", nombre:"Paciente ejemplo", inicio:"2026-06-29", hechas:3, activo:true,
+    notas:[
+      { fecha:"2026-06-29", t:"Inicio del protocolo. Dosis baja. Sin efectos adversos." },
+      { fecha:"2026-07-03", t:"Refiere mejor ánimo y foco; sueño estable. Continúa igual." },
+    ] },
+];
+/* ══════════════════════════ FIN DATOS ══════════════════════════ */
+
+// ---- navegación ----
+function show(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active', el.id==='view-'+v));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('on', n.dataset.v===v));
+  window.scrollTo({top:0, behavior:'smooth'});
+  try{ localStorage.setItem('vistaActiva', v); }catch(e){}
+}
+// refuerzo: además del onclick inline, delegamos por si el click cae en un hijo
+document.addEventListener('click', e=>{
+  const t = e.target.closest('[data-v]');
+  if(t) show(t.dataset.v);
+});
+
+// ---- sincronización automática ----
+// Al volver a esta pestaña (p. ej. tras cargar un dato nuevo), recarga para mostrar lo último.
+const CARGADO_EN = Date.now();
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && Date.now() - CARGADO_EN > 2000){
+    location.reload();
+  }
+});
+
+// ---- helpers ----
+const $ = s => document.querySelector(s);
+const dias = f => Math.floor((Date.now() - new Date(f+"T00:00:00")) / 86400000);
+const fecha = f => { const [y,m,d]=f.split("-"); return `${d}/${m}`; };
+const cepaTag = c => `<span class="tag ${c.toLowerCase()}">${c}</span>`;
+const activasPlaca = l => l.total==null ? null : l.total - (l.contam||0);
+const placaActiva = l => l.activo !== false;
+const ageCls = d => d>=21?"bad":d>=14?"warn":"ok";
+
+// ---- pipeline ----
+const placasActivas = PLACAS.filter(placaActiva).reduce((s,l)=> s + (activasPlaca(l)||0), 0);
+const granoCol = GRANO.filter(g=>g.estado==="colonizando").length;
+const bulkN = BULK.length;
+const fruN = FRUCTI.length;
+const cosN = COSECHAS.length;
+
+const stages = [
+  { s:"var(--placa)", i:"🧫", n:placasActivas, lbl:"Placas",  det:PLACAS.filter(placaActiva).length+" lotes",  v:"placas" },
+  { s:"var(--grano)", i:"🌾", n:granoCol,      lbl:"Grano",   det:"vivos",                 v:"grano" },
+  { s:"var(--bulk)",  i:"📦", n:bulkN,         lbl:"Sustrato",det:"incubando",             v:"bulk" },
+  { s:"var(--fru)",   i:"🍄", n:fruN,          lbl:"Fructi",  det:"activas",               v:"fru" },
+  { s:"var(--cos)",   i:"⚖️", n:cosN,          lbl:"Cosecha", det:"flushes",               v:"cos" },
+];
+$("#pipe").innerHTML = stages.map(x =>
+  `<button class="stage" data-v="${x.v}" style="--s:${x.s}" onclick="show('${x.v}')"><div class="icn">${x.i}</div><div class="n">${x.n||0}</div><div class="lbl">${x.lbl}</div><div class="det">${x.det}</div></button>`
+).join("");
+
+// ---- badges del sidebar ----
+$("#nb-placas").textContent = placasActivas;
+$("#nb-grano").textContent  = granoCol;
+$("#nb-bulk").textContent   = bulkN;
+$("#nb-fru").textContent    = fruN;
+$("#nb-cos").textContent    = cosN;
+$("#nb-bita").textContent   = BITACORA.length;
+
+// ---- efectividad ----
+const conDato = PLACAS.filter(l=>placaActiva(l) && l.total!=null);
+const totalPl = conDato.reduce((s,l)=> s + l.total, 0);
+const contamPl = conDato.reduce((s,l)=> s + (l.contam||0), 0);
+const ef = totalPl ? Math.round((totalPl-contamPl)/totalPl*100) : null;
+const granoVivo = GRANO.filter(g=>g.estado!=="baja").length;
+const efGrano = GRANO.length ? Math.round(granoVivo/GRANO.length*100) : null;
+const totFresco = COSECHAS.reduce((s,c)=>s+(c.fresco||0),0);
+const totSeco = COSECHAS.reduce((s,c)=>s+(c.seco||0),0);
+$("#datos").innerHTML = `
+  <div class="mcard"><div class="ml">Placas sanas</div><div class="mv">${ef!=null?ef+"%":"—"}</div><div class="ms">${totalPl-contamPl} de ${totalPl} con dato</div></div>
+  <div class="mcard"><div class="ml">Grano viable</div><div class="mv">${efGrano!=null?efGrano+"%":"—"}</div><div class="ms">${granoVivo} de ${GRANO.length} frascos</div></div>
+  <div class="mcard"><div class="ml">Cosechado</div><div class="mv">${totFresco?totFresco+"g":"—"}</div><div class="ms">${totSeco?totSeco+"g seco · "+Math.round(totSeco/totFresco*100)+"%":"fresco acumulado"}</div></div>`;
+
+// ---- render helpers ----
+function porCepa(arr){ const g={}; arr.forEach(x=>{(g[x.cepa]=g[x.cepa]||[]).push(x)}); return g; }
+function seccion(sel, arr, fn){
+  if(!arr.length){ $(sel).innerHTML = `<div class="empty">Sin registros.</div>`; return; }
+  const g = porCepa(arr); let h="";
+  ["JF","SIF"].forEach(c=>{ if(!g[c]) return;
+    h += `<div class="cepa-sub">${c==="JF"?"Jack Frost":"Super Ice Flower"} · ${g[c].length}</div>`;
+    h += g[c].map(fn).join("");
+  });
+  $(sel).innerHTML = h;
+}
+
+// Placas — solo lotes activos; los archivados quedan en los datos pero no se listan
+const placasArch = PLACAS.filter(l=>!placaActiva(l)).length;
+seccion("#placas", PLACAS.filter(placaActiva), l=>{
+  const d = dias(l.fecha), act = activasPlaca(l), cls = ageCls(d);
+  const alerta = d>=21 ? "⚠ subcultivar urgente" : d>=14 ? "↑ conviene subcultivar" : "";
+  return `<div class="row">${cepaTag(l.cepa)}<span class="id">${l.id}</span>
+    <span class="meta">${act!=null?act+" placas":"s/dato"} · ${fecha(l.fecha)}${l.nota?" · "+l.nota:""}</span>
+    <span class="spacer"></span>
+    ${l.contam?`<span class="tag bad">${l.contam} baja${l.contam>1?"s":""}</span>`:`<span class="tag ok">sin bajas</span>`}
+    <span class="age ${cls}">día ${d}</span>
+    ${alerta?`<div class="alert">${alerta}</div>`:""}</div>`;
+});
+$("#c-placas").textContent = `${placasActivas} placas activas en ${PLACAS.filter(placaActiva).length} lotes${placasArch?` · ${placasArch} lotes archivados (guardados)`:""}.`;
+
+// Grano — solo lo vivo; las bajas quedan en los datos pero no se listan
+const granoBajas = GRANO.filter(g=>g.estado==="baja").length;
+seccion("#grano", GRANO.filter(g=>g.estado!=="baja"), g=>{
+  const d = dias(g.fecha);
+  const tag = g.estado==="listo" ? `<span class="tag ok">listo ✓</span>`
+            : `<span class="tag warn">colonizando</span>`;
+  return `<div class="row">${cepaTag(g.cepa)}<span class="id">${g.id}</span>
+    <span class="meta">${fecha(g.fecha)}${g.nota?" · "+g.nota:""}</span>
+    <span class="spacer"></span>${tag}
+    <span class="age ok">día ${d}</span></div>`;
+});
+$("#c-grano").textContent = `${granoCol} unidades vivas${granoBajas?` · ${granoBajas} bajas guardadas (no listadas)`:""}.`;
+
+// Bulk
+seccion("#bulk", BULK, b=>{
+  const d = dias(b.fecha);
+  return `<div class="row">${cepaTag(b.cepa)}<span class="id">${b.id}</span>
+    <span class="tag g">${b.tipo}</span>
+    <span class="meta">${b.nota||""}</span>
+    <span class="spacer"></span><span class="age ok">día ${d}</span></div>`;
+});
+$("#c-bulk").textContent = `${BULK.length} unidades incubando en fibra de coco.`;
+
+// Fructi
+seccion("#fru", FRUCTI, f=>{
+  const d = dias(f.fecha)+1;
+  return `<div class="row">${cepaTag(f.cepa)}<span class="id">${f.id}</span>
+    <span class="tag g">${f.tipo}</span>
+    <span class="meta">${f.nota||""}</span>
+    <span class="spacer"></span><span class="age ok">día ${d}</span></div>`;
+});
+$("#c-fru").textContent = `${FRUCTI.length} unidades en fructificación.`;
+
+// Cosechas — fresco y seco separados y parametrizados
+const num = n => (n+"").replace(".",",");
+const rend = (s,f) => (s&&f) ? (s/f*100).toFixed(1).replace(".",",")+"%" : "—";
+(function renderCosechas(){
+  const cont = $("#cos");
+  if(!COSECHAS.length){ cont.innerHTML = `<div class="empty">Sin cosechas registradas.</div>`; return; }
+  let h = `<div class="cos-tot">
+    <div class="ct"><span class="l">Fresco total</span><span class="v">${num(totFresco)} g</span></div>
+    <div class="ct"><span class="l">Seco total</span><span class="v">${num(totSeco)} g</span></div>
+    <div class="ct"><span class="l">Rendimiento</span><span class="v">${rend(totSeco,totFresco)}</span></div>
+  </div>`;
+  h += COSECHAS.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(c=>`
+    <div class="cos-card">
+      <div class="cos-head">${cepaTag(c.cepa)}<span class="id">${c.id}</span><span class="tag g">flush ${c.flush}</span><span class="spacer"></span><span class="meta">${fecha(c.fecha)}</span></div>
+      <div class="cos-stats">
+        <div class="cs fresco"><span class="cl">Fresco</span><span class="cv">${num(c.fresco)} g</span></div>
+        <div class="cs seco"><span class="cl">Seco</span><span class="cv">${c.seco!=null?num(c.seco)+" g":"—"}</span></div>
+        <div class="cs rend"><span class="cl">Rendimiento</span><span class="cv">${rend(c.seco,c.fresco)}</span></div>
+      </div>
+      ${c.nota?`<div class="cos-nota">${c.nota}</div>`:""}
+    </div>`).join("");
+  cont.innerHTML = h;
+})();
+$("#c-cos").textContent = `${COSECHAS.length} flush · ${num(totFresco)} g fresco / ${num(totSeco)} g seco acumulado.`;
+
+// Bitácora (completa + reciente)
+const bitaOrd = [...BITACORA].sort((a,b)=> b.fecha.localeCompare(a.fecha));
+const tlItem = e => `<div class="tl-item"><div class="d">${fecha(e.fecha)}</div><div class="t">${e.t}</div></div>`;
+$("#tl").innerHTML = bitaOrd.map(tlItem).join("");
+$("#tl-mini").innerHTML = bitaOrd.slice(0,5).map(tlItem).join("");
+
+// ═══ Microdosis · pacientes ═══
+const DIAS_S = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const PATRON = [[0,2,4],[1,3]]; // semanas impares: Lun/Mié/Vie · pares: Mar/Jue (offsets desde el lunes)
+function tomasDe(inicio){
+  const base = new Date(inicio+"T00:00:00");
+  const dow = (base.getDay()+6)%7;                 // 0 = lunes
+  const lunes0 = new Date(base); lunes0.setDate(base.getDate()-dow);
+  const out=[];
+  for(let w=0; w<8; w++){
+    PATRON[w%2].forEach(o=>{ const d=new Date(lunes0); d.setDate(lunes0.getDate()+w*7+o); out.push(d); });
+  }
+  return out;                                       // 20 fechas
+}
+const fmtD = d => `${DIAS_S[(d.getDay()+6)%7]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+
+// tarjeta de protocolo
+$("#proto").innerHTML = `<div class="proto">
+  <h3>💊 Protocolo Fadiman personalizado</h3>
+  <div class="rules">
+    <b>20 tomas</b> a lo largo de <b>8 semanas</b> (≈ 2 meses).<br>
+    Semanas <b>1 · 3 · 5 · 7</b> → Lunes, Miércoles y Viernes <b>(3 tomas)</b>.<br>
+    Semanas <b>2 · 4 · 6 · 8</b> → Martes y Jueves <b>(2 tomas)</b>.<br>
+    Fines de semana: descanso.
+  </div>
+  <div class="pill-legend">
+    <span class="lg"><i style="background:#2b5f43"></i>tomada</span>
+    <span class="lg"><i style="background:var(--sif)"></i>próxima</span>
+    <span class="lg"><i style="background:var(--bg);border:1px solid var(--line)"></i>pendiente</span>
+  </div>
+</div>`;
+
+// pacientes — EDITABLE en la app, persistido en localStorage (el bloque DATOS es solo la semilla inicial)
+const PAC_KEY = 'microdosisPacientes';
+const seedNorm = p => ({ id:p.id, nombre:p.nombre, inicio:p.inicio, activo:p.activo!==false,
+  done: Array.from({length:Math.min(p.hechas||0,20)}, (_,i)=>i+1), notas:(p.notas||[]).slice() });
+function savePac(){ try{ localStorage.setItem(PAC_KEY, JSON.stringify(PAC)); }catch(e){} }
+function loadPac(){
+  let stored=null;
+  try{ const raw=localStorage.getItem(PAC_KEY); if(raw) stored=JSON.parse(raw); }catch(e){}
+  const seed = PACIENTES.map(seedNorm);
+  if(!stored){ return seed; }
+  const ids = new Set(stored.map(p=>p.id));
+  seed.forEach(s=>{ if(!ids.has(s.id)) stored.push(s); });  // suma nuevas semillas si aparecieran
+  return stored;
+}
+let PAC = loadPac(); savePac();
+const notasAbiertas = new Set();  // qué pacientes tienen el historial de notas desplegado (runtime)
+const hoyISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const nextId = () => { let mx=0; PAC.forEach(p=>{ const m=/(\d+)$/.exec(p.id); if(m) mx=Math.max(mx,+m[1]); }); return 'PX-'+String(mx+1).padStart(3,'0'); };
+
+// acciones (globales para los onclick)
+function toggleToma(pid,num){ const p=PAC.find(x=>x.id===pid); if(!p)return; const i=p.done.indexOf(num); if(i>=0)p.done.splice(i,1); else p.done.push(num); savePac(); renderPacientes(); }
+function toggleNotas(pid){ if(notasAbiertas.has(pid)) notasAbiertas.delete(pid); else notasAbiertas.add(pid); renderPacientes(); }
+function addNota(pid){ const inp=document.getElementById('ni-'+pid); const t=(inp&&inp.value||'').trim(); if(!t)return; const p=PAC.find(x=>x.id===pid); p.notas.push({fecha:hoyISO(),t}); notasAbiertas.add(pid); savePac(); renderPacientes(); }
+function delNota(pid,i){ const p=PAC.find(x=>x.id===pid); if(!p)return; p.notas.splice(i,1); savePac(); renderPacientes(); }
+function toggleEstado(pid){ const p=PAC.find(x=>x.id===pid); if(!p)return; p.activo=!p.activo; savePac(); renderPacientes(); }
+function delPaciente(pid){ if(!confirm('¿Eliminar este paciente y sus registros?'))return; PAC=PAC.filter(p=>p.id!==pid); savePac(); renderPacientes(); }
+function addPaciente(){ const nm=(document.getElementById('np-nombre').value||'').trim(); const ini=document.getElementById('np-inicio').value;
+  if(!nm||!ini){ alert('Completá nombre y fecha de inicio (idealmente un lunes).'); return; }
+  PAC.push({ id:nextId(), nombre:nm, inicio:ini, activo:true, done:[], notas:[] }); savePac(); renderPacientes(); }
+function exportarPac(){ const blob=new Blob([JSON.stringify(PAC,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='microdosis_pacientes.json'; a.click(); }
+
+let pacSel = null;  // paciente abierto (null = lista)
+function abrirPaciente(pid){ pacSel=pid; renderPacientes(); window.scrollTo({top:0,behavior:'smooth'}); }
+function volverLista(){ pacSel=null; renderPacientes(); }
+
+function fichaPaciente(p){
+  const tomas = tomasDe(p.inicio);
+  const hechas = p.done.length;
+  const pct = Math.round(hechas/20*100);
+  const abierto = notasAbiertas.has(p.id);
+  let nextNum=0; for(let i=1;i<=20;i++){ if(p.done.indexOf(i)<0){ nextNum=i; break; } }
+  let gi=0, grid="";
+  for(let w=0; w<8; w++){
+    const n = w%2===0 ? 3 : 2; let pills="";
+    for(let k=0; k<n; k++, gi++){
+      const num = gi+1;
+      const cls = p.done.indexOf(num)>=0 ? 'done' : (num===nextNum ? 'next' : 'pend');
+      pills += `<span class="toma ${cls}" onclick="toggleToma('${p.id}',${num})" title="Marcar/desmarcar toma #${num}"><span class="tn">#${num}</span>${fmtD(tomas[gi])}</span>`;
+    }
+    grid += `<div class="wkrow"><span class="wl">S${w+1}</span>${pills}</div>`;
+  }
+  const notas = p.notas.map((n,idx)=>({...n,_i:idx})).sort((a,b)=>b.fecha.localeCompare(a.fecha))
+    .map(n=>`<div class="pac-note"><span class="nd">${fecha(n.fecha)}</span><span class="nx">${n.t}</span><span class="del" onclick="delNota('${p.id}',${n._i})" title="Eliminar">✕</span></div>`).join("");
+  const prox = hechas<20 ? `próxima: toma #${nextNum} · ${fmtD(tomas[nextNum-1])}` : `protocolo completo ✓`;
+  return `<div class="pac">
+    <div class="pac-h"><span class="nm">${p.nombre}</span><span class="pid">${p.id}</span>
+      ${p.activo?`<span class="tag sif">en curso</span>`:`<span class="tag g">finalizado</span>`}
+      <span class="meta">inicio ${fecha(p.inicio)} · ${hechas}/20 tomas</span>
+      <span class="pac-tools">
+        <button class="btn ghost sm" onclick="toggleEstado('${p.id}')">${p.activo?'Finalizar':'Reactivar'}</button>
+        <button class="btn ghost sm" onclick="delPaciente('${p.id}')">Eliminar</button>
+      </span></div>
+    <div class="prog"><div class="prog-bar" style="width:${pct}%"></div></div>
+    <div class="prog-txt">${hechas} de 20 tomas · ${20-hechas} restantes · ${prox} <span style="opacity:.6">· tocá cada día para marcar la toma</span></div>
+    ${grid}
+    <div class="pac-notas">
+      <button class="notas-toggle" onclick="toggleNotas('${p.id}')"><span class="arw">${abierto?'▾':'▸'}</span> Observaciones <span class="cnt">(${p.notas.length})</span></button>
+      ${abierto ? `<div class="notas-body">${notas||`<div class="empty">Sin observaciones aún.</div>`}
+        <div class="nota-add"><textarea id="ni-${p.id}" rows="4" placeholder="Nueva observación..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addNota('${p.id}')}"></textarea><button class="btn sm" onclick="addNota('${p.id}')">+ Nota</button></div>
+      </div>` : ``}
+    </div>
+  </div>`;
+}
+
+function pacRow(p){
+  const hechas=p.done.length, pct=Math.round(hechas/20*100);
+  return `<button class="pac-row" onclick="abrirPaciente('${p.id}')">
+    <span class="nm">${p.nombre}</span><span class="pid">${p.id}</span>
+    ${p.activo?`<span class="tag sif">en curso</span>`:`<span class="tag g">finalizado</span>`}
+    <span class="meta">inicio ${fecha(p.inicio)}</span>
+    <span class="spacer"></span>
+    <span class="mini-prog"><span class="mp-bar" style="width:${pct}%"></span></span>
+    <span class="rc">${hechas}/20 ›</span>
+  </button>`;
+}
+
+function renderPacientes(){
+  $("#nb-pac").textContent = PAC.filter(p=>p.activo).length;
+  const cont = $("#pacientes");
+  // modo detalle
+  if(pacSel){
+    const p = PAC.find(x=>x.id===pacSel);
+    if(!p){ pacSel=null; return renderPacientes(); }
+    cont.innerHTML = `<button class="btn ghost sm" style="margin-bottom:14px" onclick="volverLista()">← Volver a la lista</button>` + fichaPaciente(p);
+    return;
+  }
+  // modo lista
+  const head = `<div class="pac-new">
+      <input class="nm" id="np-nombre" placeholder="Nombre del nuevo paciente">
+      <input type="date" id="np-inicio" title="Fecha de la 1ª toma (idealmente lunes)">
+      <button class="btn" onclick="addPaciente()">+ Agregar paciente</button>
+    </div>
+    <div class="export-row"><button class="btn ghost sm" onclick="exportarPac()">⬇ Exportar datos (backup JSON)</button></div>`;
+  if(!PAC.length){ cont.innerHTML = head + `<div class="empty">Sin pacientes. Agregá el primero con el formulario de arriba.</div>`; return; }
+  cont.innerHTML = head + PAC.map(pacRow).join("");
+}
+renderPacientes();
+
+// footer + sub
+const [y,m,dd] = ACTUALIZADO.split("-");
+$("#sub").textContent = `Psilocybe cubensis · datos al ${dd}/${m}/${y}`;
+$("#foot").innerHTML = `Cepas albinas verdaderas, sin esporas viables — propagación solo en agar.<br><br>Para cargar novedades: editá el bloque <b>DATOS</b> del script.`;
+
+// restaurar la última vista que estabas mirando (tras refrescar)
+try{
+  const vg = localStorage.getItem('vistaActiva');
+  if(vg && document.getElementById('view-'+vg)) show(vg);
+}catch(e){}
+</script>
+</body>
+</html>

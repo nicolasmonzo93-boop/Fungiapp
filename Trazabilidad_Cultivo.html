@@ -301,7 +301,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14p
    DATOS · editá SOLO este bloque para cargar novedades del lab.
    Fechas en formato "AAAA-MM-DD". Una línea por unidad/lote.
    ══════════════════════════════════════════════════════════════ */
-const ACTUALIZADO = "2026-07-04";
+const ACTUALIZADO = "2026-07-05";
 
 // Lotes de placas. estado se calcula por antigüedad. total=null si no se sabe.
 // activo:false = archivado (se guarda pero no cuenta ni se muestra en la lista)
@@ -311,7 +311,7 @@ const PLACAS = [
   { id:"LP-JF-190626",  cepa:"JF",  fecha:"2026-06-19", total:12,   contam:0, activo:false, nota:"archivado 04/07" },
   { id:"LP-SIF-200626", cepa:"SIF", fecha:"2026-06-20", total:13,   contam:4, activo:false, nota:"archivado 04/07" },
   { id:"LP-SIF-190626", cepa:"SIF", fecha:"2026-06-19", total:18,   contam:3, nota:"15 sanas al 04/07" },
-  { id:"LP-JF-200626",  cepa:"JF",  fecha:"2026-06-20", total:17,   contam:3, nota:"p2 · 14 sanas al 04/07 · 3 bajas trich" },
+  { id:"LP-JF-200626",  cepa:"JF",  fecha:"2026-06-20", total:17,   contam:5, nota:"p2 · 12 sanas al 05/07 · 5 bajas trich" },
 ];
 
 // Frascos/bolsas de grano (spawn). estado: "colonizando" | "listo" | "baja"
@@ -359,6 +359,7 @@ const COSECHAS = [
 
 // Bitácora: hitos en orden (los más nuevos arriba se ordenan solos).
 const BITACORA = [
+  { fecha:"2026-07-05", t:"Baja de 2 placas JF p2 (LP-JF-200626) por trichoderma → quedan 12 sanas." },
   { fecha:"2026-07-04", t:"Recuento de placas: vivos 2 lotes (14 JF p2 + 15 SIF = 29). Archivados LP-JF-070626, LP-SIF-070626, LP-JF-190626 y LP-SIF-200626." },
   { fecha:"2026-07-04", t:"Armadas 2 bolsas de bulk con coco esterilizado (1 kg c/u), ambas SIF (SIF-BLS-001/002). Quedan incubando." },
   { fecha:"2026-07-02", t:"Bajas por trichoderma: 2 frascos JF (GRN-002/003) + 1 SIF (GRN-005) + 1 placa JF p2 (LP-JF-200626)." },

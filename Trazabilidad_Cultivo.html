@@ -301,7 +301,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14p
    DATOS · editá SOLO este bloque para cargar novedades del lab.
    Fechas en formato "AAAA-MM-DD". Una línea por unidad/lote.
    ══════════════════════════════════════════════════════════════ */
-const ACTUALIZADO = "2026-07-07";
+const ACTUALIZADO = "2026-07-11";
 
 // Lotes de placas. estado se calcula por antigüedad. total=null si no se sabe.
 // activo:false = archivado (se guarda pero no cuenta ni se muestra en la lista)
@@ -314,12 +314,18 @@ const PLACAS = [
   { id:"LP-JF-200626",  cepa:"JF",  fecha:"2026-06-20", total:16,   contam:7, nota:"p2 · 9 sanas al 07/07 · 7 bajas trich · 1 a grano 07/07" },
 ];
 
+// Placas guardadas en heladera (conservación / reserva viva). n = cantidad.
+const CONSERVA = [
+  { cepa:"JF",  n:2, fecha:"2026-07-07", nota:"heladera" },
+  { cepa:"SIF", n:3, fecha:"2026-07-07", nota:"heladera" },
+];
+
 // Frascos/bolsas de grano (spawn). estado: "colonizando" | "listo" | "baja"
 const GRANO = [
   { id:"JF-GRN-001",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 25/06" },
   { id:"JF-GRN-002",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 02/07" },
   { id:"JF-GRN-003",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 02/07" },
-  { id:"JF-GRN-004",  cepa:"JF",  fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"JF-GRN-004",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"baja 11/07" },
   { id:"JF-GRN-005",  cepa:"JF",  fecha:"2026-06-21", estado:"colonizando", nota:"" },
   { id:"JF-GRN-006",  cepa:"JF",  fecha:"2026-06-21", estado:"colonizando", nota:"" },
   { id:"JF-GRN-007",  cepa:"JF",  fecha:"2026-06-28", estado:"baja",        nota:"bolsa centeno · trichoderma 05/07" },
@@ -349,8 +355,6 @@ const GRANO = [
 
 // Unidades en incubación de sustrato (fibra de coco). tipo: "bolsa" | "monotube"
 const BULK = [
-  { id:"JF-BLS-001",  cepa:"JF",  tipo:"bolsa", fecha:"2026-06-19", nota:"colonizando bien al 25/06" },
-  { id:"JF-BLS-002",  cepa:"JF",  tipo:"bolsa", fecha:"2026-06-19", nota:"colonizando bien al 25/06" },
   { id:"SIF-BLS-001", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg · recién armada" },
   { id:"SIF-BLS-002", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg · recién armada" },
 ];
@@ -359,6 +363,8 @@ const BULK = [
 const FRUCTI = [
   { id:"JF-MNT-000", cepa:"JF", tipo:"monotube", fecha:"2026-06-13", nota:"muchos frutos y pines" },
   { id:"JF-BLS-000", cepa:"JF", tipo:"bolsa",    fecha:"2026-06-24", nota:"primeros pines el 01/07 (día 8)" },
+  { id:"JF-BLS-001", cepa:"JF", tipo:"bolsa",    fecha:"2026-07-11", nota:"pase a fructi 11/07" },
+  { id:"JF-BLS-002", cepa:"JF", tipo:"bolsa",    fecha:"2026-07-11", nota:"pase a fructi 11/07" },
 ];
 
 // Cosechas (flushes).
@@ -368,6 +374,9 @@ const COSECHAS = [
 
 // Bitácora: hitos en orden (los más nuevos arriba se ordenan solos).
 const BITACORA = [
+  { fecha:"2026-07-11", t:"JF-BLS-001 y JF-BLS-002 pasan a fructificación." },
+  { fecha:"2026-07-11", t:"Baja de 1 frasco de grano JF (JF-GRN-004)." },
+  { fecha:"2026-07-07", t:"Conservación: guardadas en heladera 2 placas JF + 3 SIF (reserva viva)." },
   { fecha:"2026-07-07", t:"Baja de 2 placas JF p2 (LP-JF-200626) por trichoderma → quedan 9 sanas." },
   { fecha:"2026-07-07", t:"Pasaje placa→grano: 1 placa JF + 2 SIF usadas para inocular 4 frascos JF (GRN-008..011) + 5 SIF (GRN-014..018) con centeno." },
   { fecha:"2026-07-05", t:"Baja por trichoderma de 2 bolsas de grano del 28/06 (JF-GRN-007 + SIF-GRN-013)." },
@@ -496,7 +505,10 @@ seccion("#placas", PLACAS.filter(placaActiva), l=>{
     <span class="age ${cls}">día ${d}</span>
     ${alerta?`<div class="alert">${alerta}</div>`:""}</div>`;
 });
-$("#c-placas").textContent = `${placasActivas} placas activas en ${PLACAS.filter(placaActiva).length} lotes${placasArch?` · ${placasArch} lotes archivados (guardados)`:""}.`;
+const conservaJF = (typeof CONSERVA!=='undefined'?CONSERVA:[]).filter(c=>c.cepa==='JF').reduce((s,c)=>s+c.n,0);
+const conservaSIF = (typeof CONSERVA!=='undefined'?CONSERVA:[]).filter(c=>c.cepa==='SIF').reduce((s,c)=>s+c.n,0);
+const conservaTot = conservaJF + conservaSIF;
+$("#c-placas").textContent = `${placasActivas} placas activas en ${PLACAS.filter(placaActiva).length} lotes${placasArch?` · ${placasArch} lotes archivados`:""}${conservaTot?` · 🧊 ${conservaTot} en heladera (${conservaJF} JF · ${conservaSIF} SIF)`:""}.`;
 
 // Grano — solo lo vivo; las bajas quedan en los datos pero no se listan
 const granoBajas = GRANO.filter(g=>g.estado==="baja").length;

@@ -365,24 +365,22 @@ const BULK = [
 
 // Unidades en fructificación. fecha = pase a fructificación.
 const FRUCTI = [
-  { id:"JF-MNT-000", cepa:"JF", tipo:"monotube", fecha:"2026-06-13", nota:"flush 2 cosechado 13/07 · va por 3er flush" },
-  { id:"JF-BLS-000", cepa:"JF", tipo:"bolsa",    fecha:"2026-06-24", nota:"flush 1 cosechado 13/07" },
+  { id:"JF-MNT+BLS-000", cepa:"JF", tipo:"recombinado", fecha:"2026-06-13", nota:"recombinación monotube MNT-000 + bolsa BLS-000 · va por 3er flush" },
   { id:"JF-BLS-001", cepa:"JF", tipo:"bolsa",    fecha:"2026-07-13", nota:"pase a fructi 13/07" },
   { id:"JF-BLS-002", cepa:"JF", tipo:"bolsa",    fecha:"2026-07-13", nota:"pase a fructi 13/07" },
 ];
 
 // Cosechas (flushes).
 const COSECHAS = [
-  { id:"JF-MNT-000", cepa:"JF", flush:2, fecha:"2026-07-13", fresco:null,  seco:33,   nota:"2º flush · 33 g seco (conjunto con BLS-000) · va por 3er flush" },
-  { id:"JF-BLS-000", cepa:"JF", flush:1, fecha:"2026-07-13", fresco:null,  seco:null, nota:"1er flush · peso incluido en el conjunto (33 g)" },
-  { id:"JF-MNT-000", cepa:"JF", flush:1, fecha:"2026-06-28", fresco:257.5, seco:22,   nota:"primer flush · monotube" },
+  { id:"JF-MNT+BLS-000", cepa:"JF", flush:2, fecha:"2026-07-13", fresco:null,  seco:33,   nota:"recombinación monotube + bolsa · 33 g seco · va por 3er flush" },
+  { id:"JF-MNT-000",     cepa:"JF", flush:1, fecha:"2026-06-28", fresco:257.5, seco:22,   nota:"1er flush · monotube (antes de recombinar)" },
 ];
 
 // Bitácora: hitos en orden (los más nuevos arriba se ordenan solos).
 const BITACORA = [
   { fecha:"2026-07-18", t:"Pasaje de placa (2º): nuevo lote LP-JF-180726 (19 placas, p3) + LP-SIF-180726 (20). Se usó 1 placa JF p2 y 1 SIF del lote madre." },
   { fecha:"2026-07-14", t:"Armados 2 bulks: SIF-BLS-003 (4 frascos SIF) y JF-BLS-003 (frascos JF). Baja 1 frasco SIF (GRN-016) por trichoderma." },
-  { fecha:"2026-07-13", t:"Cosecha JF-MNT-000 flush 2 (va por 3er flush) y JF-BLS-000 flush 1: 33 g seco en conjunto." },
+  { fecha:"2026-07-13", t:"Recombinación JF: monotube MNT-000 + bolsa BLS-000 unificados en JF-MNT+BLS-000. Cosecha conjunta: 33 g seco. Va por 3er flush." },
   { fecha:"2026-07-13", t:"JF-BLS-001 y JF-BLS-002 pasan a fructificación." },
   { fecha:"2026-07-11", t:"Baja de 1 frasco de grano JF (JF-GRN-004)." },
   { fecha:"2026-07-07", t:"Conservación: guardadas en heladera 2 placas JF + 3 SIF (reserva viva)." },
@@ -485,10 +483,15 @@ const granoVivo = GRANO.filter(g=>g.estado!=="baja").length;
 const efGrano = GRANO.length ? Math.round(granoVivo/GRANO.length*100) : null;
 const totFresco = COSECHAS.reduce((s,c)=>s+(c.fresco||0),0);
 const totSeco = COSECHAS.reduce((s,c)=>s+(c.seco||0),0);
+// Rendimiento solo sobre cosechas con fresco Y seco (para no romper el promedio)
+const cosEmp = COSECHAS.filter(c=>c.fresco&&c.seco);
+const frescoEmp = cosEmp.reduce((s,c)=>s+c.fresco,0);
+const secoEmp = cosEmp.reduce((s,c)=>s+c.seco,0);
+const rendGlobal = frescoEmp ? Math.round(secoEmp/frescoEmp*100) : null;
 $("#datos").innerHTML = `
   <div class="mcard"><div class="ml">Placas sanas</div><div class="mv">${ef!=null?ef+"%":"—"}</div><div class="ms">${totalPl-contamPl} de ${totalPl} con dato</div></div>
   <div class="mcard"><div class="ml">Grano viable</div><div class="mv">${efGrano!=null?efGrano+"%":"—"}</div><div class="ms">${granoVivo} de ${GRANO.length} frascos</div></div>
-  <div class="mcard"><div class="ml">Cosechado</div><div class="mv">${totFresco?totFresco+"g":"—"}</div><div class="ms">${totSeco?totSeco+"g seco · "+Math.round(totSeco/totFresco*100)+"%":"fresco acumulado"}</div></div>`;
+  <div class="mcard"><div class="ml">Cosechado</div><div class="mv">${totSeco?totSeco+"g seco":"—"}</div><div class="ms">${totFresco?totFresco+"g fresco"+(rendGlobal!=null?" · "+rendGlobal+"% rend.":""):"seco acumulado"}</div></div>`;
 
 // ---- render helpers ----
 function porCepa(arr){ const g={}; arr.forEach(x=>{(g[x.cepa]=g[x.cepa]||[]).push(x)}); return g; }
@@ -583,7 +586,7 @@ const rend = (s,f) => (s&&f) ? (s/f*100).toFixed(1).replace(".",",")+"%" : "—"
   let h = `<div class="cos-tot">
     <div class="ct"><span class="l">Fresco total</span><span class="v">${num(totFresco)} g</span></div>
     <div class="ct"><span class="l">Seco total</span><span class="v">${num(totSeco)} g</span></div>
-    <div class="ct"><span class="l">Rendimiento</span><span class="v">${rend(totSeco,totFresco)}</span></div>
+    <div class="ct"><span class="l">Rendimiento</span><span class="v">${rend(secoEmp,frescoEmp)}</span></div>
   </div>`;
   h += COSECHAS.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(c=>`
     <div class="cos-card">

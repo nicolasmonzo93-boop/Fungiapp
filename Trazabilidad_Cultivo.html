@@ -301,7 +301,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14p
    DATOS · editá SOLO este bloque para cargar novedades del lab.
    Fechas en formato "AAAA-MM-DD". Una línea por unidad/lote.
    ══════════════════════════════════════════════════════════════ */
-const ACTUALIZADO = "2026-07-11";
+const ACTUALIZADO = "2026-07-18";
 
 // Lotes de placas. estado se calcula por antigüedad. total=null si no se sabe.
 // activo:false = archivado (se guarda pero no cuenta ni se muestra en la lista)
@@ -310,8 +310,10 @@ const PLACAS = [
   { id:"LP-SIF-070626", cepa:"SIF", fecha:"2026-06-07", total:null, contam:1, activo:false, nota:"pre-trazabilidad · archivado 04/07" },
   { id:"LP-JF-190626",  cepa:"JF",  fecha:"2026-06-19", total:12,   contam:0, activo:false, nota:"archivado 04/07" },
   { id:"LP-SIF-200626", cepa:"SIF", fecha:"2026-06-20", total:13,   contam:4, activo:false, nota:"archivado 04/07" },
-  { id:"LP-SIF-190626", cepa:"SIF", fecha:"2026-06-19", total:16,   contam:3, nota:"13 sanas al 07/07 · 2 a grano 07/07" },
-  { id:"LP-JF-200626",  cepa:"JF",  fecha:"2026-06-20", total:16,   contam:7, nota:"p2 · 9 sanas al 07/07 · 7 bajas trich · 1 a grano 07/07" },
+  { id:"LP-SIF-190626", cepa:"SIF", fecha:"2026-06-19", total:15,   contam:3, nota:"12 sanas al 18/07 · 2 a grano · 1 a pasaje 18/07" },
+  { id:"LP-JF-200626",  cepa:"JF",  fecha:"2026-06-20", total:15,   contam:7, nota:"p2 · 8 sanas al 18/07 · 7 bajas trich · 1 a grano · 1 a pasaje 18/07" },
+  { id:"LP-JF-180726",  cepa:"JF",  fecha:"2026-07-18", total:19,   contam:0, nota:"p3 · 2º pasaje de placa (del lote p2)" },
+  { id:"LP-SIF-180726", cepa:"SIF", fecha:"2026-07-18", total:20,   contam:0, nota:"pasaje de placa (del lote 19/06)" },
 ];
 
 // Placas guardadas en heladera (conservación / reserva viva). n = cantidad.
@@ -327,8 +329,8 @@ const GRANO = [
   { id:"JF-GRN-003",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 02/07" },
   { id:"JF-GRN-004",  cepa:"JF",  fecha:"2026-06-21", estado:"baja",        nota:"baja 11/07" },
   { id:"JF-GRN-005",  cepa:"JF",  fecha:"2026-06-21", estado:"colonizando", nota:"" },
-  { id:"JF-GRN-006",  cepa:"JF",  fecha:"2026-06-21", estado:"colonizando", nota:"" },
-  { id:"JF-GRN-007",  cepa:"JF",  fecha:"2026-06-28", estado:"baja",        nota:"bolsa centeno · trichoderma 05/07" },
+  { id:"JF-GRN-006",  cepa:"JF",  fecha:"2026-06-21", estado:"usado",       nota:"a bulk JF-BLS-003 · 14/07" },
+  { id:"JF-GRN-007",  cepa:"JF",  fecha:"2026-06-28", estado:"baja",        nota:"bolsa centeno · trichoderma 07/07" },
   { id:"JF-GRN-008",  cepa:"JF",  fecha:"2026-07-07", estado:"colonizando", nota:"frasco centeno · pasaje de placa" },
   { id:"JF-GRN-009",  cepa:"JF",  fecha:"2026-07-07", estado:"colonizando", nota:"frasco centeno · pasaje de placa" },
   { id:"JF-GRN-010",  cepa:"JF",  fecha:"2026-07-07", estado:"colonizando", nota:"frasco centeno · pasaje de placa" },
@@ -338,49 +340,56 @@ const GRANO = [
   { id:"SIF-GRN-003", cepa:"SIF", fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 25/06" },
   { id:"SIF-GRN-004", cepa:"SIF", fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 27/06" },
   { id:"SIF-GRN-005", cepa:"SIF", fecha:"2026-06-21", estado:"baja",        nota:"trichoderma 02/07" },
-  { id:"SIF-GRN-006", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
-  { id:"SIF-GRN-007", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
+  { id:"SIF-GRN-006", cepa:"SIF", fecha:"2026-06-21", estado:"usado",       nota:"a bulk SIF-BLS-003 · 14/07" },
+  { id:"SIF-GRN-007", cepa:"SIF", fecha:"2026-06-21", estado:"usado",       nota:"a bulk SIF-BLS-003 · 14/07" },
   { id:"SIF-GRN-008", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
   { id:"SIF-GRN-009", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
   { id:"SIF-GRN-010", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
   { id:"SIF-GRN-011", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
   { id:"SIF-GRN-012", cepa:"SIF", fecha:"2026-06-21", estado:"colonizando", nota:"" },
-  { id:"SIF-GRN-013", cepa:"SIF", fecha:"2026-06-28", estado:"baja",        nota:"bolsa centeno · trichoderma 05/07" },
-  { id:"SIF-GRN-014", cepa:"SIF", fecha:"2026-07-07", estado:"colonizando", nota:"frasco centeno · pasaje de placa" },
-  { id:"SIF-GRN-015", cepa:"SIF", fecha:"2026-07-07", estado:"colonizando", nota:"frasco centeno · pasaje de placa" },
-  { id:"SIF-GRN-016", cepa:"SIF", fecha:"2026-07-07", estado:"colonizando", nota:"frasco centeno · pasaje de placa" },
+  { id:"SIF-GRN-013", cepa:"SIF", fecha:"2026-06-28", estado:"baja",        nota:"bolsa centeno · trichoderma 07/07" },
+  { id:"SIF-GRN-014", cepa:"SIF", fecha:"2026-07-07", estado:"usado",       nota:"a bulk SIF-BLS-003 · 14/07" },
+  { id:"SIF-GRN-015", cepa:"SIF", fecha:"2026-07-07", estado:"usado",       nota:"a bulk SIF-BLS-003 · 14/07" },
+  { id:"SIF-GRN-016", cepa:"SIF", fecha:"2026-07-07", estado:"baja",        nota:"trichoderma 14/07" },
   { id:"SIF-GRN-017", cepa:"SIF", fecha:"2026-07-07", estado:"colonizando", nota:"frasco centeno · pasaje de placa" },
   { id:"SIF-GRN-018", cepa:"SIF", fecha:"2026-07-07", estado:"colonizando", nota:"frasco centeno · pasaje de placa" },
 ];
 
 // Unidades en incubación de sustrato (fibra de coco). tipo: "bolsa" | "monotube"
 const BULK = [
-  { id:"SIF-BLS-001", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg · recién armada" },
-  { id:"SIF-BLS-002", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg · recién armada" },
+  { id:"SIF-BLS-001", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg" },
+  { id:"SIF-BLS-002", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg" },
+  { id:"SIF-BLS-003", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-14", nota:"armado con 4 frascos de grano SIF" },
+  { id:"JF-BLS-003",  cepa:"JF",  tipo:"bolsa", fecha:"2026-07-14", nota:"armado con frascos de grano JF" },
 ];
 
 // Unidades en fructificación. fecha = pase a fructificación.
 const FRUCTI = [
-  { id:"JF-MNT-000", cepa:"JF", tipo:"monotube", fecha:"2026-06-13", nota:"muchos frutos y pines" },
-  { id:"JF-BLS-000", cepa:"JF", tipo:"bolsa",    fecha:"2026-06-24", nota:"primeros pines el 01/07 (día 8)" },
-  { id:"JF-BLS-001", cepa:"JF", tipo:"bolsa",    fecha:"2026-07-11", nota:"pase a fructi 11/07" },
-  { id:"JF-BLS-002", cepa:"JF", tipo:"bolsa",    fecha:"2026-07-11", nota:"pase a fructi 11/07" },
+  { id:"JF-MNT-000", cepa:"JF", tipo:"monotube", fecha:"2026-06-13", nota:"flush 2 cosechado 13/07 · va por 3er flush" },
+  { id:"JF-BLS-000", cepa:"JF", tipo:"bolsa",    fecha:"2026-06-24", nota:"flush 1 cosechado 13/07" },
+  { id:"JF-BLS-001", cepa:"JF", tipo:"bolsa",    fecha:"2026-07-13", nota:"pase a fructi 13/07" },
+  { id:"JF-BLS-002", cepa:"JF", tipo:"bolsa",    fecha:"2026-07-13", nota:"pase a fructi 13/07" },
 ];
 
 // Cosechas (flushes).
 const COSECHAS = [
-  { id:"JF-MNT-000", cepa:"JF", flush:1, fecha:"2026-06-28", fresco:257.5, seco:22, nota:"primer flush · monotube" },
+  { id:"JF-MNT-000", cepa:"JF", flush:2, fecha:"2026-07-13", fresco:null,  seco:33,   nota:"2º flush · 33 g seco (conjunto con BLS-000) · va por 3er flush" },
+  { id:"JF-BLS-000", cepa:"JF", flush:1, fecha:"2026-07-13", fresco:null,  seco:null, nota:"1er flush · peso incluido en el conjunto (33 g)" },
+  { id:"JF-MNT-000", cepa:"JF", flush:1, fecha:"2026-06-28", fresco:257.5, seco:22,   nota:"primer flush · monotube" },
 ];
 
 // Bitácora: hitos en orden (los más nuevos arriba se ordenan solos).
 const BITACORA = [
-  { fecha:"2026-07-11", t:"JF-BLS-001 y JF-BLS-002 pasan a fructificación." },
+  { fecha:"2026-07-18", t:"Pasaje de placa (2º): nuevo lote LP-JF-180726 (19 placas, p3) + LP-SIF-180726 (20). Se usó 1 placa JF p2 y 1 SIF del lote madre." },
+  { fecha:"2026-07-14", t:"Armados 2 bulks: SIF-BLS-003 (4 frascos SIF) y JF-BLS-003 (frascos JF). Baja 1 frasco SIF (GRN-016) por trichoderma." },
+  { fecha:"2026-07-13", t:"Cosecha JF-MNT-000 flush 2 (va por 3er flush) y JF-BLS-000 flush 1: 33 g seco en conjunto." },
+  { fecha:"2026-07-13", t:"JF-BLS-001 y JF-BLS-002 pasan a fructificación." },
   { fecha:"2026-07-11", t:"Baja de 1 frasco de grano JF (JF-GRN-004)." },
   { fecha:"2026-07-07", t:"Conservación: guardadas en heladera 2 placas JF + 3 SIF (reserva viva)." },
   { fecha:"2026-07-07", t:"Baja de 2 placas JF p2 (LP-JF-200626) por trichoderma → quedan 9 sanas." },
   { fecha:"2026-07-07", t:"Pasaje placa→grano: 1 placa JF + 2 SIF usadas para inocular 4 frascos JF (GRN-008..011) + 5 SIF (GRN-014..018) con centeno." },
-  { fecha:"2026-07-05", t:"Baja por trichoderma de 2 bolsas de grano del 28/06 (JF-GRN-007 + SIF-GRN-013)." },
-  { fecha:"2026-07-05", t:"Baja de 2 placas JF p2 (LP-JF-200626) por trichoderma → quedan 12 sanas." },
+  { fecha:"2026-07-07", t:"Baja por trichoderma de 2 bolsas de grano del 28/06 (JF-GRN-007 + SIF-GRN-013)." },
+  { fecha:"2026-07-06", t:"Baja de 2 placas JF p2 (LP-JF-200626) por trichoderma → quedan 12 sanas." },
   { fecha:"2026-07-04", t:"Recuento de placas: vivos 2 lotes (14 JF p2 + 15 SIF = 29). Archivados LP-JF-070626, LP-SIF-070626, LP-JF-190626 y LP-SIF-200626." },
   { fecha:"2026-07-04", t:"Armadas 2 bolsas de bulk con coco esterilizado (1 kg c/u), ambas SIF (SIF-BLS-001/002). Quedan incubando." },
   { fecha:"2026-07-02", t:"Bajas por trichoderma: 2 frascos JF (GRN-002/003) + 1 SIF (GRN-005) + 1 placa JF p2 (LP-JF-200626)." },
@@ -510,9 +519,10 @@ const conservaSIF = (typeof CONSERVA!=='undefined'?CONSERVA:[]).filter(c=>c.cepa
 const conservaTot = conservaJF + conservaSIF;
 $("#c-placas").textContent = `${placasActivas} placas activas en ${PLACAS.filter(placaActiva).length} lotes${placasArch?` · ${placasArch} lotes archivados`:""}${conservaTot?` · 🧊 ${conservaTot} en heladera (${conservaJF} JF · ${conservaSIF} SIF)`:""}.`;
 
-// Grano — solo lo vivo; las bajas quedan en los datos pero no se listan
+// Grano — se listan solo los activos (colonizando/listo); usados en bulk y bajas quedan en los datos
 const granoBajas = GRANO.filter(g=>g.estado==="baja").length;
-seccion("#grano", GRANO.filter(g=>g.estado!=="baja"), g=>{
+const granoUsado = GRANO.filter(g=>g.estado==="usado").length;
+seccion("#grano", GRANO.filter(g=>g.estado==="colonizando"||g.estado==="listo"), g=>{
   const d = dias(g.fecha);
   const tag = g.estado==="listo" ? `<span class="tag ok">listo ✓</span>`
             : `<span class="tag warn">colonizando</span>`;
@@ -521,7 +531,7 @@ seccion("#grano", GRANO.filter(g=>g.estado!=="baja"), g=>{
     <span class="spacer"></span>${tag}
     <span class="age ok">día ${d}</span></div>`;
 });
-$("#c-grano").textContent = `${granoCol} unidades vivas${granoBajas?` · ${granoBajas} bajas guardadas (no listadas)`:""}.`;
+$("#c-grano").textContent = `${granoCol} unidades vivas${granoUsado?` · ${granoUsado} usadas en bulk`:""}${granoBajas?` · ${granoBajas} bajas`:""}.`;
 
 // Bulk
 seccion("#bulk", BULK, b=>{
@@ -558,7 +568,7 @@ const rend = (s,f) => (s&&f) ? (s/f*100).toFixed(1).replace(".",",")+"%" : "—"
     <div class="cos-card">
       <div class="cos-head">${cepaTag(c.cepa)}<span class="id">${c.id}</span><span class="tag g">flush ${c.flush}</span><span class="spacer"></span><span class="meta">${fecha(c.fecha)}</span></div>
       <div class="cos-stats">
-        <div class="cs fresco"><span class="cl">Fresco</span><span class="cv">${num(c.fresco)} g</span></div>
+        <div class="cs fresco"><span class="cl">Fresco</span><span class="cv">${c.fresco!=null?num(c.fresco)+" g":"pend."}</span></div>
         <div class="cs seco"><span class="cl">Seco</span><span class="cv">${c.seco!=null?num(c.seco)+" g":"—"}</span></div>
         <div class="cs rend"><span class="cl">Rendimiento</span><span class="cv">${rend(c.seco,c.fresco)}</span></div>
       </div>

@@ -359,8 +359,8 @@ const GRANO = [
 const BULK = [
   { id:"SIF-BLS-001", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg" },
   { id:"SIF-BLS-002", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg" },
-  { id:"SIF-BLS-003", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-14", nota:"armado con 4 frascos de grano SIF" },
-  { id:"JF-BLS-003",  cepa:"JF",  tipo:"bolsa", fecha:"2026-07-14", nota:"armado con frascos de grano JF" },
+  { id:"SIF-BLS-003", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-14", origen:["SIF-GRN-006","SIF-GRN-007","SIF-GRN-014","SIF-GRN-015"], nota:"armado con 4 frascos de grano SIF" },
+  { id:"JF-BLS-003",  cepa:"JF",  tipo:"bolsa", fecha:"2026-07-14", origen:["JF-GRN-006"], nota:"armado con frascos de grano JF" },
 ];
 
 // Unidades en fructificación. fecha = pase a fructificación.
@@ -519,19 +519,40 @@ const conservaSIF = (typeof CONSERVA!=='undefined'?CONSERVA:[]).filter(c=>c.cepa
 const conservaTot = conservaJF + conservaSIF;
 $("#c-placas").textContent = `${placasActivas} placas activas en ${PLACAS.filter(placaActiva).length} lotes${placasArch?` · ${placasArch} lotes archivados`:""}${conservaTot?` · 🧊 ${conservaTot} en heladera (${conservaJF} JF · ${conservaSIF} SIF)`:""}.`;
 
-// Grano — se listan solo los activos (colonizando/listo); usados en bulk y bajas quedan en los datos
+// Recorrido de cada frasco: dónde está su material hoy (grano → bulk → fructi → cosecha)
+function ubicacionDe(id){
+  if(COSECHAS.some(c=>c.id===id)) return "cosechado";
+  if(FRUCTI.some(f=>f.id===id))   return "en fructificación";
+  if(BULK.some(b=>b.id===id))     return "en incubación (bulk)";
+  return null;
+}
+function destinoDeGrano(jarId){
+  const u = [...COSECHAS, ...FRUCTI, ...BULK].find(x=>x.origen && x.origen.indexOf(jarId)>=0);
+  return u ? u.id : null;
+}
 const granoBajas = GRANO.filter(g=>g.estado==="baja").length;
 const granoUsado = GRANO.filter(g=>g.estado==="usado").length;
-seccion("#grano", GRANO.filter(g=>g.estado==="colonizando"||g.estado==="listo"), g=>{
+// Se listan activos y usados (con su recorrido); las bajas quedan ocultas.
+seccion("#grano", GRANO.filter(g=>g.estado!=="baja"), g=>{
   const d = dias(g.fecha);
-  const tag = g.estado==="listo" ? `<span class="tag ok">listo ✓</span>`
-            : `<span class="tag warn">colonizando</span>`;
+  if(g.estado==="usado"){
+    const dest = destinoDeGrano(g.id);
+    const ub = dest ? ubicacionDe(dest) : null;
+    return `<div class="row" style="opacity:.65">${cepaTag(g.cepa)}<span class="id">${g.id}</span>
+      <span class="meta">${fecha(g.fecha)}</span>
+      <span class="spacer"></span><span class="tag g">usado</span>
+      <span class="age warn">→ ${dest||"bulk"}${ub?" · "+ub:""}</span></div>`;
+  }
+  const tag = g.estado==="listo"    ? `<span class="tag ok">listo ✓</span>`
+            : d>=14                 ? `<span class="tag ok">colonizado ✓</span>`
+            :                         `<span class="tag warn">colonizando</span>`;
+  const enGrano = g.estado==="listo"||d>=14 ? "en grano · listo para usar" : "en grano · colonizando";
   return `<div class="row">${cepaTag(g.cepa)}<span class="id">${g.id}</span>
-    <span class="meta">${fecha(g.fecha)}${g.nota?" · "+g.nota:""}</span>
+    <span class="meta">${fecha(g.fecha)} · ${enGrano}</span>
     <span class="spacer"></span>${tag}
     <span class="age ok">día ${d}</span></div>`;
 });
-$("#c-grano").textContent = `${granoCol} unidades vivas${granoUsado?` · ${granoUsado} usadas en bulk`:""}${granoBajas?` · ${granoBajas} bajas`:""}.`;
+$("#c-grano").textContent = `${granoCol} en grano${granoUsado?` · ${granoUsado} usados → bulk`:""}${granoBajas?` · ${granoBajas} bajas`:""}.`;
 
 // Bulk
 seccion("#bulk", BULK, b=>{

@@ -397,6 +397,9 @@ const BULK = [
   { id:"SIF-BLS-002", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-04", nota:"coco esterilizado 1 kg" },
   { id:"SIF-BLS-003", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-14", origen:["SIF-GRN-006","SIF-GRN-007","SIF-GRN-014","SIF-GRN-015"], nota:"armado con 4 frascos de grano SIF" },
   { id:"JF-BLS-003",  cepa:"JF",  tipo:"bolsa", fecha:"2026-07-14", origen:["JF-GRN-006"], nota:"armado con frascos de grano JF" },
+  { id:"SIF-BLS-004", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-18", nota:"coco esterilizado" },
+  { id:"SIF-BLS-005", cepa:"SIF", tipo:"bolsa", fecha:"2026-07-18", nota:"coco esterilizado" },
+  { id:"JF-BLS-004",  cepa:"JF",  tipo:"bolsa", fecha:"2026-07-18", nota:"coco esterilizado" },
 ];
 
 // Unidades en fructificación. fecha = pase a fructificación.
@@ -414,6 +417,7 @@ const COSECHAS = [
 
 // Bitácora: hitos en orden (los más nuevos arriba se ordenan solos).
 const BITACORA = [
+  { fecha:"2026-07-18", t:"3 bulks nuevos en bolsa: SIF-BLS-004, SIF-BLS-005 y JF-BLS-004 (coco esterilizado). A incubación." },
   { fecha:"2026-07-18", t:"Pasaje de placa (2º): nuevo lote LP-JF-180726 (19 placas, p3) + LP-SIF-180726 (20). Se usó 1 placa JF p2 y 1 SIF del lote madre." },
   { fecha:"2026-07-14", t:"Armados 2 bulks: SIF-BLS-003 (4 frascos SIF) y JF-BLS-003 (frascos JF). Baja 1 frasco SIF (GRN-016) por trichoderma." },
   { fecha:"2026-07-13", t:"Recombinación JF: monotube MNT-000 + bolsa BLS-000 unificados en JF-MNT+BLS-000. Cosecha conjunta: 33 g seco. Va por 3er flush." },
